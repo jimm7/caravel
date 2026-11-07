@@ -31,8 +31,12 @@ int HARDWARE_TEST_MAIN(void){
  /* Fixed navigation rows display their actual behavior and retain legacy preferences. */
  uint32_t pref=ui_prefs,pref2=ui_prefs2,view=ui_home_view;menu_put(MI_BPMLOCK,1);menu_put(MI_SELECT,3);menu_put(MI_HOME,2);CHECK(ui_prefs==pref&&ui_prefs2==pref2&&ui_home_view==view);CHECK(menu_n(MI_BPMLOCK)==1&&str_eq(menu_vname(MI_BPMLOCK,0),"GLO+SEL"));
  /* Actual button workflow; saved legacy SELECT preferences cannot hijack navigation. */
- hp_apply(0,2);go_home();for(unsigned i=0;i<4;i++){ui_prefs2=(ui_prefs2&~0x50)|(i&1?0x10:0)|(i&2?0x40:0);int bpm=song.g[G_BPM];turn(EN_SELECT,1);CHECK(ui.home&&hp.track[0].active==1&&song.g[G_BPM]==bpm);taps(B_HOME);CHECK(ui.home);taps(B_HOME);CHECK(ui.home);turn(EN_SELECT,-1);CHECK(hp.track[0].active==0);}
- taps(B_GLO);page_is("MIXER");turn(EN_SELECT,1);page_is("CLOCK");turn(EN_SELECT,1);page_is("SONG");turn(EN_SELECT,8);page_is("SONG");turn(EN_SELECT,-8);page_is("MIXER");taps(B_HOME);CHECK(ui.home);
+ hp_apply(0,2);go_home();for(unsigned i=0;i<4;i++){ui_prefs2=(ui_prefs2&~0x50)|(i&1?0x10:0)|(i&2?0x40:0);int bpm=song.g[G_BPM];turn(EN_SELECT,1);CHECK(ui.home&&hp.track[0].active==1&&song.g[G_BPM]==bpm);
+  /* Caravel Plus: first HOME tap opens MIXER; the next quick tap toggles
+   * ACTION and returns HOME. Four saved SELECT preferences cannot hijack it. */
+  uint8_t prev_action=action_enabled;taps(B_HOME);page_is("MIXER");taps(B_HOME);CHECK(ui.home&&action_enabled!=prev_action);
+  turn(EN_SELECT,-1);CHECK(hp.track[0].active==0);}
+ taps(B_GLO);page_is("MIXER");turn(EN_SELECT,1);page_is("LEVELS");turn(EN_SELECT,1);page_is("CLOCK");turn(EN_SELECT,1);page_is("SONG");turn(EN_SELECT,8);page_is("SONG");turn(EN_SELECT,-8);page_is("MIXER");taps(B_HOME);CHECK(ui.home);
  int bpm=song.g[G_BPM];web_buttons(1u<<B_GLO);run_ms(80);turn(EN_SELECT,2);web_buttons(0);run_ms(180);CHECK(song.g[G_BPM]>bpm&&ui.home);
  web_buttons(1u<<B_HOME);run_ms(900);web_buttons(0);run_ms(160);CHECK(ui.menu);turn(EN_SELECT,1);CHECK(ui.menu);taps(B_HOME);CHECK(!ui.menu&&ui.home);
  hp_open_editor();hp_apply(0,2);turn(EN_SELECT,1);CHECK(cur_page()->graph==GR_HOMEEDIT&&hp_edit_row==1);turn(EN_SELECT,99);CHECK(cur_page()->graph==GR_HOMEEDIT&&hp_edit_row==1);go_home();
