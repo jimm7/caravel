@@ -101,7 +101,13 @@ static void action_refresh(void)
 /* Called only on HOME TAP; never delays the existing first HOME tap. */
 static int action_home_double_tap(void)
 {
- if(!ui.home || ui.menu || ui.confirm || ui.layer || ui.ly){
+ /* Caravel Plus: the first HOME tap now opens MIXER. Keep the second
+  * tap eligible for the existing ACTION toggle while it is on MIXER; a
+  * normal (slower) tap still goes onward to CLOCK. */
+ const int mixer_after_first = !ui.home && !ui.menu && !ui.confirm &&
+     !ui.layer && !ui.ly && cur_page()->graph == GR_TRK &&
+     action_home_tap_ms && fm1_ms-action_home_tap_ms<=330u;
+ if((!ui.home && !mixer_after_first) || ui.menu || ui.confirm || ui.layer || ui.ly){
   action_home_tap_ms=0;
   return 0;
  }
@@ -110,6 +116,7 @@ static int action_home_double_tap(void)
   action_setup=0;action_bank_down=0;action_bank_long=0;
   action_snap_down=0;action_snap_long=0;
   action_home_tap_ms=0;
+  if(mixer_after_first)go_home();
   action_refresh();
   ui.force=1;
   ui_message(action_enabled?"HOME ACTION ON":"HOME ACTION OFF");
