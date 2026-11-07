@@ -221,6 +221,7 @@ static void fl_plain_window_init(void) {}
 #define FL_FAR(fn) (fn)
 #include "../../firmware/src/storage.c"
 #include "../../firmware/src/upreset.c"
+#include "../../firmware/hal/fm1_flash_ids.h"
 #include "../../firmware/src/project.c"
 #if FELUCCA_HOME_PERF
 #if FELUCCA_PERF_HW
