@@ -95,3 +95,11 @@ The v0.11.0 source already implements a MIXER page with K1 LEVEL, K2 PAN, K3 REV
 - A focused host UI entry point (`CARAVEL_PLUS_FOCUSED`) now executes navigation, independent T1-T4 level edits, and the existing ACTION double-tap with the performance flags enabled. The native-legacy UI suite remains separate.
 - Added a Caravel Plus UI compile-and-run step to `.github/workflows/action-banks-android.yml` following its generated-table build.
 - **No validation result yet:** no successful CI run, host compilation, emulator run, target build, or hardware test was observed at the time of this commit. Treat the branch as experimental; do not install it on the device.
+
+## CI evidence and development package (2026-11-07)
+
+- The corrected ACTION banks Android emulator run (GitHub run 42363486088, source `72eacbe9`) **passed** all workflow steps, including the Caravel Plus mixer host check.
+- Source and release metadata for that revision passed separately. The complete validation workflow deliberately skips draft pull requests (see `.github/workflows/validate-060.yml`).
+- The ACTION workflow now retains a separate `CARAVEL-PLUS-UNVERIFIED-<commit>` artifact after its full sequence succeeds, containing a `.fwsc`, app, loader, SHA256SUMS, upstream attribution files, and `READ-FIRST.txt`. This is **a CI development artifact only, not a released beta**.
+- The packaging addition needs a passing CI run on its own revision before any downloadable binary from it can be considered verified as the exact source revision.
+- Still required for an installation candidate: complete validation suite (manual workflow_dispatch on this branch is possible without changing draft status), version/build identity policy, project backup and restoration verification, recovery exercise, and actual FM-1 hardware tests.
