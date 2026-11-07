@@ -7,6 +7,8 @@ on:
       - 'experiments/action-banks/**'
       - 'experiments/home-perf/**'
       - 'firmware/src/**'
+      - 'firmware/hal/fm1_flash_ids.h'
+      - 'tests/fm1_flash_ids_test.c'
       - 'web/emu/**'
       - 'tests/stasis_continuity_test.c'
       - '.github/workflows/action-banks-android.yml'
@@ -72,6 +74,10 @@ jobs:
               --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
               https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$RUNNER_TEMP/ac79-sdk"
           fi
+      - name: FM-1 SPI-NOR JEDEC allowlist regression (no flash operations)
+        run: |
+          cc -O2 -Wall -Wextra -Werror tests/fm1_flash_ids_test.c -o "$RUNNER_TEMP/fm1-flash-ids-test"
+          "$RUNNER_TEMP/fm1-flash-ids-test"
       - name: Baseline Caravel 0.6.0 build and generated firmware tables
         env:
           CC: cc -include stdint.h
