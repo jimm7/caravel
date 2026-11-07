@@ -81,6 +81,13 @@ static int mom_turn(uint32_t k, int32_t s)
         hp_turn(k,s,1); return 1;
 #endif
         d = home_param(k, &vp);
+#if FELUCCA_HOME_PERF
+    } else if (pg->scope == SC_TRK && str_eq(pg->title, "LEVELS") && !lock_held()) {
+        /* Four channel mixer: momentary adjustments belong to each channel. */
+        vp = &trk[k & 3u].p[P_LEVEL];
+        d = &TP[P_LEVEL];
+        t = &trk[k & 3u];
+#endif
     } else if (pg->scope == SC_TRK && !lock_held()) {  /* MIXER (#195): the selected track's LEVEL PAN REV MUTE */
         static const uint8_t MIX_ID[4] = {P_LEVEL, P_PAN, P_REV, P_MUTE};   /* (tracks_edit's knobs) */
         vp = &TSEL->p[MIX_ID[k & 3u]];
@@ -1066,6 +1073,20 @@ static void edit_param(uint32_t slot, int32_t steps)
         return;
     }
     if (pg->scope == SC_TRK) {
+#if FELUCCA_HOME_PERF
+        if (str_eq(pg->title, "LEVELS")) {
+            /* Four faders, one encoder per track; use exactly the existing
+             * LEVEL descriptor, motion capture and MIDI learn semantics. */
+            track_t *t = &trk[slot & 3u];
+            const param_desc_t *d = &TP[P_LEVEL];
+            int16_t *vp = &t->p[P_LEVEL];
+            *vp = (int16_t)clamp(*vp + accel(EN_K1 + slot, steps,
+                         d->max - d->min), d->min, d->max);
+            motion_capture(t, P_LEVEL, *vp);
+            ml_knob(t, P_LEVEL);
+            return;
+        }
+#endif
         tracks_edit(slot, steps);
         return;
     }
