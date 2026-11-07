@@ -216,6 +216,8 @@ CC="${CC:-cc} -O1 -Wall -Wno-unused-function"
 fail=0
 run() { label=$1; echo "== $label"; shift; "$@" || { rc=$?; echo "FAILED (exit $rc): $label"; fail=1; }; }
 
+$CC -O2 -Wall -Wextra -Werror -o "$OUT/fm1_flash_ids_test" tests/fm1_flash_ids_test.c
+run "FM-1 SPI NOR ID allowlist: Puya, UCUN, unknown rejected" "$OUT/fm1_flash_ids_test"
 run "release artifacts: offline synthetic fixture checks" python3 -B tests/release_artifacts_test.py
 run "site: exact release source, notices and navigation" python3 -B tests/site_release_test.py
 
