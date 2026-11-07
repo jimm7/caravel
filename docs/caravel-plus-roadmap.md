@@ -76,3 +76,15 @@ The v0.11.0 source already implements a MIXER page with K1 LEVEL, K2 PAN, K3 REV
 **Double-tap behaviour:** two quick HOME taps within 330 ms toggle the existing ACTION bank mode and return to HOME; slower taps navigate MIXER > CLOCK > HOME. This path must be checked with host tests and the emulator, including HOME held for MENU. The code paths are in `ui_input.c` and `experiments/action-banks/action_control.c`.
 
 **Follow-up:** verify tap versus held-menu handling and the effect of HOME track-navigation preferences before release. Design a four-track simultaneous mixing view only after the navigation test is sound.
+
+## Second implementation: four-track LEVELS view (2026-11-07)
+
+- Added a dedicated `LEVELS` page to `FAM_GLO`, appended after the existing page table entries to preserve previously saved page indices.
+- Performance HOME taps now navigate `HOME > MIXER > LEVELS > CLOCK > HOME`; from a different page, HOME returns to HOME.
+- The existing `MIXER` stays intact: K1 LEVEL / K2 PAN / K3 REV / K4 MUTE of the selected ALGORITHM track.
+- On `LEVELS`, K1-K4 edit LEVEL of T1-T4 independently. The same four track strips display the levels, selected track, names, mute badges, and meters.
+- LEVELS edits reuse the normal per-track level storage, MIDI-learn and motion-capture paths. No project format, audio signal processing or additional state was introduced.
+- Quick HOME double-tap remains the ACTION-bank gesture (second tap returns to HOME), while a held HOME remains MENU.
+- Added a guarded host UI test for navigation, independent K2/K4 edits, and double-tap behaviour.
+
+**Verification boundary:** Source changes and test source were committed; no compile, host-test execution, browser emulator run, memory-budget check, or physical FM-1 flashing has been completed. The source code is experimental until these gates pass.
