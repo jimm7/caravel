@@ -88,3 +88,10 @@ The v0.11.0 source already implements a MIXER page with K1 LEVEL, K2 PAN, K3 REV
 - Added a guarded host UI test for navigation, independent K2/K4 edits, and double-tap behaviour.
 
 **Verification boundary:** Source changes and test source were committed; no compile, host-test execution, browser emulator run, memory-budget check, or physical FM-1 flashing has been completed. The source code is experimental until these gates pass.
+
+## Validation review and CI gate (2026-11-07)
+
+- Corrected ACTION timing: `action_refresh()` no longer erases the 330 ms HOME double-tap timer merely because the first tap opened MIXER; it clears stale timers outside that view.
+- A focused host UI entry point (`CARAVEL_PLUS_FOCUSED`) now executes navigation, independent T1-T4 level edits, and the existing ACTION double-tap with the performance flags enabled. The native-legacy UI suite remains separate.
+- Added a Caravel Plus UI compile-and-run step to `.github/workflows/action-banks-android.yml` following its generated-table build.
+- **No validation result yet:** no successful CI run, host compilation, emulator run, target build, or hardware test was observed at the time of this commit. Treat the branch as experimental; do not install it on the device.
