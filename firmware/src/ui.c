@@ -904,7 +904,34 @@ static void go_home(void)
 static void home_tap(void)
 {
 #if FELUCCA_HOME_PERF
-    go_home();
+    /* Caravel Plus: HOME -> MIXER -> CLOCK -> HOME.
+     * The performance HOME previously intercepted every HOME tap, making the
+     * existing mixer difficult to discover despite its working track controls.
+     * Enter via the named first global page, irrespective of the remembered
+     * SONG/CLOCK page, and leave every other page with a single HOME tap. */
+    if (ui.home) {
+        uint32_t i;
+        for (i = 0; i < NPAGES; i++)
+            if (PAGES[i].fam == FAM_GLO && str_eq(PAGES[i].title, "MIXER"))
+                break;
+        if (i < NPAGES) {
+            ui.page = (uint8_t)i;
+            ui.fam_last[FAM_GLO] = ui.page;
+            ui.home = 0;
+            page_entered();
+        }
+    } else if (cur_page()->fam == FAM_GLO &&
+               str_eq(cur_page()->title, "MIXER")) {
+        uint32_t i = hp_global_page(ui.page, 1);
+        if (i != ui.page) {
+            ui.page = (uint8_t)i;
+            ui.fam_last[FAM_GLO] = ui.page;
+            page_entered();
+        } else
+            go_home();
+    } else {
+        go_home();
+    }
 #else
     uint32_t i = ui.page + 1u;
     if (ui.home) {
