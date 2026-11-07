@@ -260,42 +260,47 @@ jobs:
               if license.is_file():z.write(license,str(license))
           print('Android standalone:',p.stat().st_size,'bytes')
           PY
-      - name: Identify Caravel Plus development firmware package
+      - name: Build and validate uniquely versioned Caravel Plus beta candidate
+        env:
+          CC: cc -include stdint.h
+        run: |
+          set -eu
+          export JIELI_TOOLCHAIN="$RUNNER_TEMP/jieli/toolchain"
+          export AC79_SDK="$RUNNER_TEMP/ac79-sdk"
+          python3 tools/build.py --binary-version 0.11.0-plus1
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'tools')
+          import release_artifacts
+          sdk=Path(os.environ["AC79_SDK"])
+          binaries, sdk_hashes = release_artifacts.verify_binaries(Path('.'), "0.11.0-plus1", sdk)
+          print("Candidate version, identity, app, loader, SDK hashes and package CRC validated")
+          print("Binaries:", ", ".join(sorted(binaries)))
+          print("Pinned SDK inputs:", ", ".join(sorted(sdk_hashes)))
+          PY
+      - name: Assemble unreleased Caravel Plus beta candidate with exact source identity
         shell: bash
         run: |
           set -eu
-          mkdir -p build/caravel-plus-dev
-          cp build/caravel.fwsc build/caravel-plus-dev/caravel-plus-dev.fwsc
-          cp build/felucca.bin build/caravel-plus-dev/felucca.bin
-          cp build/loader/ota.bin build/caravel-plus-dev/ota.bin
-          cat > build/caravel-plus-dev/READ-FIRST.txt <<'EOF'
-          CARAVEL PLUS - UNRELEASED DEVELOPMENT BUILD
-          ------------------------------------------
-          M-VAVE FM-1 firmware experiment based on Caravel v0.11.0.
-          This artifact was built by the ACTION banks Android emulator workflow.
-          It is NOT an approved release and is NOT hardware-validated.
-
-          DO NOT FLASH UNTIL PHYSICAL-DEVICE BACKUP, RECOVERY AND
-          HARDWARE-ACCEPTANCE CHECKS HAVE BEEN COMPLETED.
-
-          The full complete-validation workflow must also pass before
-          treating this as an install candidate. Downloading this ZIP
-          does not install or update anything.
-
-          Source: https://github.com/jimm7/caravel
-          Development PR: https://github.com/jimm7/caravel/pull/1
-          See BUILDING.md, LICENSING.md, docs/faq.md and docs/installing.md.
-          EOF
-          printf 'Source commit: %s\n' "$GITHUB_SHA" >> build/caravel-plus-dev/READ-FIRST.txt
-          (cd build/caravel-plus-dev && sha256sum caravel-plus-dev.fwsc felucca.bin ota.bin > SHA256SUMS)
-          cp LICENSE LICENSING.md NOTICE CREDITS.md build/caravel-plus-dev/
-      - name: Upload unapproved Caravel Plus firmware for verification only
+          mkdir -p build/caravel-plus-beta
+          cp build/caravel-0.11.0-plus1.fwsc build/caravel-plus-beta/
+          cp build/felucca.bin build/caravel-plus-beta/caravel-0.11.0-plus1-app.bin
+          cp build/loader/ota.bin build/caravel-plus-beta/caravel-0.11.0-plus1-loader.bin
+          cp LICENSE LICENSING.md NOTICE CREDITS.md build/caravel-plus-beta/
+          cp docs/caravel-plus-beta-checklist.md build/caravel-plus-beta/READ-FIRST.md
+          git rev-parse HEAD > build/caravel-plus-beta/BUILD-COMMIT.txt
+          printf '%s\n' "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/FEATURE-HEAD-COMMIT.txt
+          printf 'GitHub Actions run: %s\nGitHub event: %s\nCandidate label: 0.11.0-plus1\nSource revision (actual checkout): %s\nFeature-branch head: %s\n'             "$GITHUB_RUN_ID" "$GITHUB_EVENT_NAME" "$(git rev-parse HEAD)"             "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/BUILD-PROVENANCE.txt
+          (cd build/caravel-plus-beta && sha256sum *.fwsc *.bin > SHA256SUMS)
+      - name: Upload non-install-approved Caravel Plus beta candidate
         uses: actions/upload-artifact@v4
         with:
-          name: CARAVEL-PLUS-UNVERIFIED-${{ github.sha }}
+          name: CARAVEL-PLUS-BETA-CANDIDATE-NOT-FOR-FLASH-${{ github.sha }}
           if-no-files-found: error
           retention-days: 14
-          path: build/caravel-plus-dev/
+          path: build/caravel-plus-beta/
       - name: Upload full physical FM-1 Android emulator preview
         uses: actions/upload-artifact@v4
         with:
