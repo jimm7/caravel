@@ -4,6 +4,7 @@
 
   python3 tools/caravel_backup.py ports
   python3 tools/caravel_backup.py save session.zip
+  python3 tools/caravel_backup.py verify session.zip  # offline; does not open MIDI
   python3 tools/caravel_backup.py restore session.zip
   python3 tools/caravel_backup.py export A project.hpm
   python3 tools/caravel_backup.py import A project.hpm
@@ -165,10 +166,17 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--input",help="Exact MIDI input port");ap.add_argument("--output",help="Exact MIDI output port");ap.add_argument("--yes",action="store_true")
     sub=ap.add_subparsers(dest="cmd",required=True);sub.add_parser("ports")
-    for cmd in ("save","restore"):sub.add_parser(cmd).add_argument("file",type=Path)
+    for cmd in ("save","restore","verify"):sub.add_parser(cmd).add_argument("file",type=Path)
     for cmd in ("export","import"):
         p=sub.add_parser(cmd);p.add_argument("slot",choices=["WORK",*"ABCD"]);p.add_argument("file",type=Path)
-    a=ap.parse_args();backend=midi.MidoBackend()
+    a=ap.parse_args()
+    if a.cmd=="verify":
+        items=load_archive(a.file)
+        print(f"Verified {len(items)} backup objects (manifest, size, CRC and content checks):")
+        for k in IDS:print(f"  {NAMES[k]}: {len(items[k])} bytes")
+        print("OFFLINE CHECK PASSED. No MIDI port opened; nothing was written to the FM-1.")
+        return
+    backend=midi.MidoBackend()
     if a.cmd=="ports":print("INPUT:",*backend.input_names(),"OUTPUT:",*backend.output_names(),sep="\n");return
     data=None
     if a.cmd=="restore":data=load_archive(a.file)

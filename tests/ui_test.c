@@ -153,10 +153,32 @@ static struct { uint32_t stage; } felucca_dbg;
 #include "../firmware/src/ui_graph.c"
 #include "../firmware/src/ui_draw.c"
 #include "../firmware/src/ui_menu.c"
+#if CARAVEL_ACTION_BANKS
+#include "../experiments/action-banks/action_control.c"
+#endif
 #include "../firmware/src/ui_input.c"
 #include "../firmware/src/ui_layer.c"
 #include "../firmware/src/upreset.c"
 #include "../firmware/src/project.c"
+
+/* The focused navigation test does not exercise performance-project flash.
+ * Firmware builds link the real home_store_hw.c backend; the isolated host UI
+ * harness deliberately stubs only that backend, never the mixer or HOME input.
+ * Project persistence remains covered by the dedicated HOME storage tests. */
+#if defined(CARAVEL_PLUS_FOCUSED) && FELUCCA_HOME_PERF
+static int hp_project_save(uint32_t slot, const char *name)
+{ (void)slot; (void)name; return 1; }
+static int hp_project_load(uint32_t slot)
+{ (void)slot; return 0; }
+static int hp_project_rename(uint32_t slot, const char *name)
+{ (void)slot; (void)name; return 1; }
+static int hp_autosave_boot(int allowed)
+{ (void)allowed; return 0; }
+static int hp_forget(uint32_t slot)
+{ (void)slot; return 1; }
+static int hp_sound_changed(const track_t *t)
+{ (void)t; return 0; }
+#endif
 
 static int check(const char *what, int ok)
 {
@@ -10011,10 +10033,76 @@ static int test_fx_hold(void)
     return bad;
 }
 
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+/* Caravel Plus: HOME exposes the existing mixer without stealing the
+ * performance ACTION double-tap gesture. This test is built in the
+ * performance-enabled UI configuration. */
+static int test_caravel_plus_home(void)
+{
+    int bad = 0, ok;
+    uint8_t was;
+    ui_power_on();
+    action_home_tap_ms = 0;
+    press(B_HOME);
+    ok = !ui.home && cur_page()->graph == GR_TRK &&
+         str_eq(cur_page()->title, "MIXER");
+    frames(400);
+    press(B_HOME);
+    ok &= !ui.home && str_eq(cur_page()->title, "LEVELS");
+    /* A slower second tap must navigate, not toggle ACTION mode. */
+    ok &= action_enabled == 0u;
+    /* On LEVELS each encoder edits its own track only. */
+    {
+        int16_t saved[NTRK];
+        for (uint32_t i = 0; i < NTRK; i++) saved[i] = trk[i].p[P_LEVEL];
+        turn(EN_K2, -3);
+        turn(EN_K4, -5);
+        ok &= trk[0].p[P_LEVEL] == saved[0] &&
+              trk[1].p[P_LEVEL] == saved[1] - 3 &&
+              trk[2].p[P_LEVEL] == saved[2] &&
+              trk[3].p[P_LEVEL] == saved[3] - 5;
+    }
+    frames(400);
+    press(B_HOME);
+    ok &= !ui.home && str_eq(cur_page()->title, "CLOCK");
+    frames(400);
+    press(B_HOME);
+    ok &= ui.home;
+    bad += check("Caravel Plus: MIXER > LEVELS (T1-T4 independent) > CLOCK > HOME", ok);
+
+    ui_power_on();
+    action_home_tap_ms = 0;
+    was = action_enabled;
+    press(B_HOME);
+    ok = !ui.home && str_eq(cur_page()->title, "MIXER") &&
+         action_enabled == was;
+    press(B_HOME);
+    ok &= ui.home && action_enabled != was;
+    bad += check("Caravel Plus: quick HOME double tap still toggles ACTION", ok);
+
+    ui_power_on();
+    action_home_tap_ms = 0;
+    go_title("ENV");
+    press(B_HOME);
+    bad += check("Caravel Plus: HOME from another page returns HOME", ui.home);
+    return bad;
+}
+#endif
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
+#if defined(CARAVEL_PLUS_FOCUSED)
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+    return test_caravel_plus_home() ? 1 : 0;
+#else
+#error "CARAVEL_PLUS_FOCUSED needs FELUCCA_HOME_PERF and CARAVEL_ACTION_BANKS"
+#endif
+#else
     int bad = 0;
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+    bad += test_caravel_plus_home();
+#endif
     bad += test_large_face();
     bad += test_sound_loads();
     bad += test_fx_hold();
@@ -10109,6 +10197,7 @@ int main(void)
     if (getenv("UI_SCREEN_DIR")) chain_screens(getenv("UI_SCREEN_DIR"));
     printf(bad ? "ui: %d FAILED\n" : "ui: all passed\n", bad);
     return bad ? 1 : 0;
+#endif /* CARAVEL_PLUS_FOCUSED */
 }
 #endif
 

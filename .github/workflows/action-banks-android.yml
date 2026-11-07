@@ -7,6 +7,8 @@ on:
       - 'experiments/action-banks/**'
       - 'experiments/home-perf/**'
       - 'firmware/src/**'
+      - 'firmware/hal/fm1_flash_ids.h'
+      - 'tests/fm1_flash_ids_test.c'
       - 'web/emu/**'
       - 'tests/stasis_continuity_test.c'
       - '.github/workflows/action-banks-android.yml'
@@ -72,6 +74,10 @@ jobs:
               --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
               https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$RUNNER_TEMP/ac79-sdk"
           fi
+      - name: FM-1 SPI-NOR JEDEC allowlist regression (no flash operations)
+        run: |
+          cc -O2 -Wall -Wextra -Werror tests/fm1_flash_ids_test.c -o "$RUNNER_TEMP/fm1-flash-ids-test"
+          "$RUNNER_TEMP/fm1-flash-ids-test"
       - name: Baseline Caravel 0.6.0 build and generated firmware tables
         env:
           CC: cc -include stdint.h
@@ -79,6 +85,16 @@ jobs:
           export JIELI_TOOLCHAIN="$RUNNER_TEMP/jieli/toolchain"
           export AC79_SDK="$RUNNER_TEMP/ac79-sdk"
           sh build.sh
+      - name: Caravel Plus mixer navigation (target-profile host UI)
+        run: |
+          cc -O1 -w -Ibuild/gen -Ifirmware/src \
+            -DCARAVEL_PLUS_FOCUSED=1 -DFELUCCA_HOME_PERF=1 \
+            -DFELUCCA_PAIR_MORPH=1 -DFELUCCA_PERF_HW=1 \
+            -DCARAVEL_ACTION_BANKS=1 -DFELUCCA_RANDOM_MORPH=1 \
+            -DCARAVEL_REVERB_MINIMAL=1 -DCARAVEL_STASIS_EXPAND=1 \
+            -DFELUCCA_SLICE=0 -DFELUCCA_CPU2=0 \
+            tests/ui_test.c -o build/caravel-plus-ui -lm
+          build/caravel-plus-ui
       - name: Install pinned WebAssembly toolchain
         run: |
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
@@ -250,6 +266,47 @@ jobs:
               if license.is_file():z.write(license,str(license))
           print('Android standalone:',p.stat().st_size,'bytes')
           PY
+      - name: Build and validate uniquely versioned Caravel Plus beta candidate
+        env:
+          CC: cc -include stdint.h
+        run: |
+          set -eu
+          export JIELI_TOOLCHAIN="$RUNNER_TEMP/jieli/toolchain"
+          export AC79_SDK="$RUNNER_TEMP/ac79-sdk"
+          python3 tools/build.py --binary-version 0.11.0-plus2
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'tools')
+          import release_artifacts
+          sdk=Path(os.environ["AC79_SDK"])
+          binaries, sdk_hashes = release_artifacts.verify_binaries(Path('.'), "0.11.0-plus2", sdk)
+          print("Candidate version, identity, app, loader, SDK hashes and package CRC validated")
+          print("Binaries:", ", ".join(sorted(binaries)))
+          print("Pinned SDK inputs:", ", ".join(sorted(sdk_hashes)))
+          PY
+      - name: Assemble unreleased Caravel Plus beta candidate with exact source identity
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p build/caravel-plus-beta
+          cp build/caravel-0.11.0-plus2.fwsc build/caravel-plus-beta/
+          cp build/felucca.bin build/caravel-plus-beta/caravel-0.11.0-plus2-app.bin
+          cp build/loader/ota.bin build/caravel-plus-beta/caravel-0.11.0-plus2-loader.bin
+          cp LICENSE LICENSING.md NOTICE CREDITS.md build/caravel-plus-beta/
+          cp docs/caravel-plus-beta-checklist.md build/caravel-plus-beta/READ-FIRST.md
+          git rev-parse HEAD > build/caravel-plus-beta/BUILD-COMMIT.txt
+          printf '%s\n' "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/FEATURE-HEAD-COMMIT.txt
+          printf 'GitHub Actions run: %s\nGitHub event: %s\nCandidate label: 0.11.0-plus2\nSource revision (actual checkout): %s\nFeature-branch head: %s\n'             "$GITHUB_RUN_ID" "$GITHUB_EVENT_NAME" "$(git rev-parse HEAD)"             "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/BUILD-PROVENANCE.txt
+          (cd build/caravel-plus-beta && sha256sum *.fwsc *.bin > SHA256SUMS)
+      - name: Upload non-install-approved Caravel Plus beta candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: CARAVEL-PLUS-BETA-CANDIDATE-NOT-FOR-FLASH-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: build/caravel-plus-beta/
       - name: Upload full physical FM-1 Android emulator preview
         uses: actions/upload-artifact@v4
         with:

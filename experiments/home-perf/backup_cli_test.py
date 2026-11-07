@@ -26,7 +26,14 @@ try:
  c.put(0,capsule);assert c.get(0,c.catalog()[0])[32:]==capsule[32:]
  with tempfile.TemporaryDirectory() as d:
   file=Path(d)/'backup.zip';b.save_archive(file,items);assert b.load_archive(file)==items
+  # The user-facing verifier must succeed offline, without constructing MIDI ports.
+  result=subprocess.run([sys.executable,str(R/'tools'/'caravel_backup.py'),'verify',str(file)],
+                        capture_output=True,text=True,check=True)
+  assert 'OFFLINE CHECK PASSED' in result.stdout and '13 backup objects' in result.stdout
   file.write_bytes(b'broken archive')
+  bad=subprocess.run([sys.executable,str(R/'tools'/'caravel_backup.py'),'verify',str(file)],
+                     capture_output=True,text=True)
+  assert bad.returncode!=0 and 'BadZipFile' not in bad.stderr
   try:b.load_archive(file)
   except b.zipfile.BadZipFile:pass
   else:raise AssertionError('Corrupt ZIP accepted')

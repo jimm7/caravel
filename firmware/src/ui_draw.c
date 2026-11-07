@@ -1225,6 +1225,23 @@ static void draw_columns(void)
             draw_act_column(c, c == 1u && ui.tl_clean && act_col() == 2u ? "CLEAN" : labels[c], VAL(c), icons[c]);
         return;
     }
+#if FELUCCA_HOME_PERF
+    if (cur_page()->scope == SC_TRK && str_eq(cur_page()->title, "LEVELS")) {
+        /* K1-K4 each control one track; the mixer strips already show all
+         * four instruments, mute badges, pan/reverb rings and meters. */
+        for (c = 0; c < NTRK; c++) {
+            const track_t *t = &trk[c];
+            const int16_t lvl = t->p[P_LEVEL];
+            param_format(&TP[P_LEVEL], lvl, val, &unit);
+            card_mot_of(&t->p[P_LEVEL]);
+            card_span_of(&TP[P_LEVEL]);
+            draw_column(c, "LEVEL", val, unit,
+                        t->p[P_MUTE] ? T_DIM : VAL(c),
+                        (int32_t)lvl * 1000 / 127, trk_icon(c, 1));
+        }
+        return;
+    }
+#endif
     if (cur_page()->scope == SC_TRK) {                 /* LEVEL PAN REV MUTE of the selected track */
         const track_t *t = TSEL;
         uint32_t lvl = trk_level(song.sel);
