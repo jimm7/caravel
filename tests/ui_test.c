@@ -10030,6 +10030,8 @@ static int test_caravel_plus_home(void)
     frames(400);
     press(B_HOME);
     ok &= !ui.home && str_eq(cur_page()->title, "LEVELS");
+    /* A slower second tap must navigate, not toggle ACTION mode. */
+    ok &= action_enabled == 0u;
     /* On LEVELS each encoder edits its own track only. */
     {
         int16_t saved[NTRK];
