@@ -161,6 +161,25 @@ static struct { uint32_t stage; } felucca_dbg;
 #include "../firmware/src/upreset.c"
 #include "../firmware/src/project.c"
 
+/* The focused navigation test does not exercise performance-project flash.
+ * Firmware builds link the real home_store_hw.c backend; the isolated host UI
+ * harness deliberately stubs only that backend, never the mixer or HOME input.
+ * Project persistence remains covered by the dedicated HOME storage tests. */
+#if defined(CARAVEL_PLUS_FOCUSED) && FELUCCA_HOME_PERF
+static int hp_project_save(uint32_t slot, const char *name)
+{ (void)slot; (void)name; return 1; }
+static int hp_project_load(uint32_t slot)
+{ (void)slot; return 0; }
+static int hp_project_rename(uint32_t slot, const char *name)
+{ (void)slot; (void)name; return 1; }
+static int hp_autosave_boot(int allowed)
+{ (void)allowed; return 0; }
+static int hp_forget(uint32_t slot)
+{ (void)slot; return 1; }
+static int hp_sound_changed(const track_t *t)
+{ (void)t; return 0; }
+#endif
+
 static int check(const char *what, int ok)
 {
     printf("ui: %-74s %s\n", what, ok ? "ok" : "FAIL");
