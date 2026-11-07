@@ -10011,10 +10011,53 @@ static int test_fx_hold(void)
     return bad;
 }
 
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+/* Caravel Plus: HOME exposes the existing mixer without stealing the
+ * performance ACTION double-tap gesture. This test is built in the
+ * performance-enabled UI configuration. */
+static int test_caravel_plus_home(void)
+{
+    int bad = 0, ok;
+    uint8_t was;
+    ui_power_on();
+    action_home_tap_ms = 0;
+    press(B_HOME);
+    ok = !ui.home && cur_page()->graph == GR_TRK &&
+         str_eq(cur_page()->title, "MIXER");
+    frames(400);
+    press(B_HOME);
+    ok &= !ui.home && str_eq(cur_page()->title, "CLOCK");
+    frames(400);
+    press(B_HOME);
+    ok &= ui.home;
+    bad += check("Caravel Plus: HOME opens MIXER, then CLOCK, then HOME", ok);
+
+    ui_power_on();
+    action_home_tap_ms = 0;
+    was = action_enabled;
+    press(B_HOME);
+    ok = !ui.home && str_eq(cur_page()->title, "MIXER") &&
+         action_enabled == was;
+    press(B_HOME);
+    ok &= ui.home && action_enabled != was;
+    bad += check("Caravel Plus: quick HOME double tap still toggles ACTION", ok);
+
+    ui_power_on();
+    action_home_tap_ms = 0;
+    go_title("ENV");
+    press(B_HOME);
+    bad += check("Caravel Plus: HOME from another page returns HOME", ui.home);
+    return bad;
+}
+#endif
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
     int bad = 0;
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+    bad += test_caravel_plus_home();
+#endif
     bad += test_large_face();
     bad += test_sound_loads();
     bad += test_fx_hold();
