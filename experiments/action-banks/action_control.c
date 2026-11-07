@@ -59,7 +59,13 @@ static void action_refresh(void)
   action_preheld |= fm1_in.notes & mask;
   action_capture_mask=mask;
  }
- if(!ui.home)action_home_tap_ms=0;
+ /* The first HOME tap now opens MIXER. Preserve the short ACTION
+  * double-tap window there, but never carry it into other pages. */
+ if (!ui.home &&
+     (ui.menu || ui.confirm || ui.layer || ui.ly ||
+      cur_page()->graph != GR_TRK || action_home_tap_ms == 0u ||
+      fm1_ms - action_home_tap_ms > 330u))
+  action_home_tap_ms = 0;
  action_snapshot_poll(mask);
  uint32_t bank_bit=1u<<ACT_KEY_FIRST;
  if(!(mask&bank_bit) || (action_preheld&bank_bit)){
