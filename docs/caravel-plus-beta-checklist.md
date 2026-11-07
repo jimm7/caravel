@@ -1,4 +1,4 @@
-# Caravel Plus v0.11.0-plus1 — beta candidate checklist
+# Caravel Plus v0.11.0-plus2 — beta candidate checklist
 
 **STATUS: UNRELEASED, UNAPPROVED FOR INSTALLATION. DO NOT FLASH THIS ARTIFACT.**
 
@@ -8,14 +8,14 @@ This development package is for code review, package-integrity checks and contro
 
 - Caravel Plus changes to the performance HOME navigation and new four-track LEVELS view (K1–K4 control track 1–4 volume)
 - Existing selected-track MIXER, ACTION-bank interactions, and other original synthesis/sequencing features
-- An explicitly versioned, rebuilt firmware with the on-device version string `v0.11.0-plus1` and versioned build identity `FM-1_999` (this differs from the earlier development artifact)
+- An explicitly versioned, rebuilt firmware with the on-device version string `v0.11.0-plus2` and versioned build identity `FM-1_999` (this differs from the earlier development artifact)
 - `BUILD-COMMIT.txt` identifies the *actual GitHub runner checkout*; on pull requests this may be a synthetic merge commit, rather than the branch tip in `FEATURE-HEAD-COMMIT.txt`
 - `SHA256SUMS` allows corruption checks but is not a publisher signature or proof that flashing is safe
 
 ## Software validation prerequisites
 
 1. The **same feature-branch revision** must pass Source and release metadata, ACTION banks Android emulator and Caravel Complete Validation.
-2. The candidate workflow must pass `tools/build.py --binary-version 0.11.0-plus1` and `release_artifacts.verify_binaries`, including pinned SDK hash checks, app identity/version, loader and .fwsc package consistency.
+2. The candidate workflow must pass `tools/build.py --binary-version 0.11.0-plus2` and `release_artifacts.verify_binaries`, including pinned SDK hash checks, app identity/version, loader and .fwsc package consistency.
 3. Confirm package name and SHA-256 in the build artifact, and review the GitHub job logs for RAM/flash-budget or compiler failures.
 4. Confirm no unexpected page-index or project-format changes. Retain test evidence.
 
