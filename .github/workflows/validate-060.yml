@@ -71,6 +71,10 @@ jobs:
               --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
               https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$RUNNER_TEMP/ac79-sdk"
           fi
+      - name: FM-1 SPI-NOR compatibility gate regression
+        run: |
+          cc -O2 -Wall -Wextra -Werror tests/fm1_flash_ids_test.c -o "$RUNNER_TEMP/fm1-flash-ids-test"
+          "$RUNNER_TEMP/fm1-flash-ids-test"
       - name: Build the actual production-profile target (version string 0.6.0 for this test build), then prepare full host fixtures
         env:
           CC: cc -include stdint.h
