@@ -273,7 +273,7 @@ jobs:
           set -eu
           export JIELI_TOOLCHAIN="$RUNNER_TEMP/jieli/toolchain"
           export AC79_SDK="$RUNNER_TEMP/ac79-sdk"
-          python3 tools/build.py --binary-version 0.11.0-plus1
+          python3 tools/build.py --binary-version 0.11.0-plus2
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -281,7 +281,7 @@ jobs:
           sys.path.insert(0, 'tools')
           import release_artifacts
           sdk=Path(os.environ["AC79_SDK"])
-          binaries, sdk_hashes = release_artifacts.verify_binaries(Path('.'), "0.11.0-plus1", sdk)
+          binaries, sdk_hashes = release_artifacts.verify_binaries(Path('.'), "0.11.0-plus2", sdk)
           print("Candidate version, identity, app, loader, SDK hashes and package CRC validated")
           print("Binaries:", ", ".join(sorted(binaries)))
           print("Pinned SDK inputs:", ", ".join(sorted(sdk_hashes)))
@@ -291,14 +291,14 @@ jobs:
         run: |
           set -eu
           mkdir -p build/caravel-plus-beta
-          cp build/caravel-0.11.0-plus1.fwsc build/caravel-plus-beta/
-          cp build/felucca.bin build/caravel-plus-beta/caravel-0.11.0-plus1-app.bin
-          cp build/loader/ota.bin build/caravel-plus-beta/caravel-0.11.0-plus1-loader.bin
+          cp build/caravel-0.11.0-plus2.fwsc build/caravel-plus-beta/
+          cp build/felucca.bin build/caravel-plus-beta/caravel-0.11.0-plus2-app.bin
+          cp build/loader/ota.bin build/caravel-plus-beta/caravel-0.11.0-plus2-loader.bin
           cp LICENSE LICENSING.md NOTICE CREDITS.md build/caravel-plus-beta/
           cp docs/caravel-plus-beta-checklist.md build/caravel-plus-beta/READ-FIRST.md
           git rev-parse HEAD > build/caravel-plus-beta/BUILD-COMMIT.txt
           printf '%s\n' "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/FEATURE-HEAD-COMMIT.txt
-          printf 'GitHub Actions run: %s\nGitHub event: %s\nCandidate label: 0.11.0-plus1\nSource revision (actual checkout): %s\nFeature-branch head: %s\n'             "$GITHUB_RUN_ID" "$GITHUB_EVENT_NAME" "$(git rev-parse HEAD)"             "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/BUILD-PROVENANCE.txt
+          printf 'GitHub Actions run: %s\nGitHub event: %s\nCandidate label: 0.11.0-plus2\nSource revision (actual checkout): %s\nFeature-branch head: %s\n'             "$GITHUB_RUN_ID" "$GITHUB_EVENT_NAME" "$(git rev-parse HEAD)"             "${{ github.event.pull_request.head.sha || github.sha }}" > build/caravel-plus-beta/BUILD-PROVENANCE.txt
           (cd build/caravel-plus-beta && sha256sum *.fwsc *.bin > SHA256SUMS)
       - name: Upload non-install-approved Caravel Plus beta candidate
         uses: actions/upload-artifact@v4
