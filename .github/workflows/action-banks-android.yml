@@ -79,6 +79,16 @@ jobs:
           export JIELI_TOOLCHAIN="$RUNNER_TEMP/jieli/toolchain"
           export AC79_SDK="$RUNNER_TEMP/ac79-sdk"
           sh build.sh
+      - name: Caravel Plus mixer navigation (target-profile host UI)
+        run: |
+          cc -O1 -w -Ibuild/gen -Ifirmware/src \
+            -DCARAVEL_PLUS_FOCUSED=1 -DFELUCCA_HOME_PERF=1 \
+            -DFELUCCA_PAIR_MORPH=1 -DFELUCCA_PERF_HW=1 \
+            -DCARAVEL_ACTION_BANKS=1 -DFELUCCA_RANDOM_MORPH=1 \
+            -DCARAVEL_REVERB_MINIMAL=1 -DCARAVEL_STASIS_EXPAND=1 \
+            -DFELUCCA_SLICE=0 -DFELUCCA_CPU2=0 \
+            tests/ui_test.c -o build/caravel-plus-ui -lm
+          build/caravel-plus-ui
       - name: Install pinned WebAssembly toolchain
         run: |
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
