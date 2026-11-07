@@ -10026,11 +10026,25 @@ static int test_caravel_plus_home(void)
          str_eq(cur_page()->title, "MIXER");
     frames(400);
     press(B_HOME);
+    ok &= !ui.home && str_eq(cur_page()->title, "LEVELS");
+    /* On LEVELS each encoder edits its own track only. */
+    {
+        int16_t saved[NTRK];
+        for (uint32_t i = 0; i < NTRK; i++) saved[i] = trk[i].p[P_LEVEL];
+        turn(EN_K2, -3);
+        turn(EN_K4, -5);
+        ok &= trk[0].p[P_LEVEL] == saved[0] &&
+              trk[1].p[P_LEVEL] == saved[1] - 3 &&
+              trk[2].p[P_LEVEL] == saved[2] &&
+              trk[3].p[P_LEVEL] == saved[3] - 5;
+    }
+    frames(400);
+    press(B_HOME);
     ok &= !ui.home && str_eq(cur_page()->title, "CLOCK");
     frames(400);
     press(B_HOME);
     ok &= ui.home;
-    bad += check("Caravel Plus: HOME opens MIXER, then CLOCK, then HOME", ok);
+    bad += check("Caravel Plus: MIXER > LEVELS (T1-T4 independent) > CLOCK > HOME", ok);
 
     ui_power_on();
     action_home_tap_ms = 0;
