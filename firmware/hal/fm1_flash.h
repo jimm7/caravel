@@ -12,6 +12,7 @@
 #pragma once
 #include <stdint.h>
 #include "fm1_xip.h"
+#include "fm1_flash_ids.h"
 
 #define RAMFN  __attribute__((section(".ram_text"), noinline, used))
 #define RAMINL static inline __attribute__((always_inline))
