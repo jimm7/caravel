@@ -71,6 +71,8 @@ The v0.11.0 source already implements a MIXER page with K1 LEVEL, K2 PAN, K3 REV
 - ALGORITHM changes selected track. The existing K1-K4 mixer functions are unchanged.
 - SAVE > PROJECT > A-D remains the intended way to persist the performance.
 
-**Testing status:** code review only. Host compilation, emulator checks, button-event regression tests, and hardware acceptance are not yet completed. Do not flash this development commit.
+**Testing status:** a conditional host UI regression test has been added for the mixer cycle and ACTION double-tap, but it has **not been executed**. Host compilation, emulator checks, and hardware acceptance are not yet completed. Do not flash this development commit.
 
-**Follow-up:** inspect the double-tap interception in `ui_input.c` and how HOME track-navigation preferences interact with this behaviour; verify tap vs held-menu behaviour before release. Design a four-track simultaneous mixing view only after the navigation test is sound.
+**Double-tap behaviour:** two quick HOME taps within 330 ms toggle the existing ACTION bank mode and return to HOME; slower taps navigate MIXER > CLOCK > HOME. This path must be checked with host tests and the emulator, including HOME held for MENU. The code paths are in `ui_input.c` and `experiments/action-banks/action_control.c`.
+
+**Follow-up:** verify tap versus held-menu handling and the effect of HOME track-navigation preferences before release. Design a four-track simultaneous mixing view only after the navigation test is sound.
