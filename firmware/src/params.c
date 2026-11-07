@@ -651,11 +651,6 @@ static const page_t PAGES[] = {
     FAM_TRK,
 #endif
     SC_TRK, GR_TRK, {0, 1, 2, 3}},
-#if FELUCCA_HOME_PERF
-    /* Caravel Plus: four levels under K1-K4; existing MIXER remains the
-     * selected track's LEVEL/PAN/REV/MUTE view. No saved page IDs changed. */
-    {"LEVELS", FAM_GLO, SC_TRK, GR_TRK, {0, 1, 2, 3}},
-#endif
     {"CLOCK",
 #if FELUCCA_HOME_PERF
     FAM_GLO,
@@ -670,6 +665,8 @@ static const page_t PAGES[] = {
 #endif
 #if FELUCCA_HOME_PERF
     {"HOME EDIT", FAM_TRK, SC_TRACK, GR_HOMEEDIT, {0xFF,0xFF,0xFF,0xFF}},
+    /* Append, never insert: persisted page references use array indices. */
+    {"LEVELS", FAM_GLO, SC_TRK, GR_TRK, {0, 1, 2, 3}},
 #endif
 };
 #define NPAGES (sizeof(PAGES) / sizeof(PAGES[0]))
