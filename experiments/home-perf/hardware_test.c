@@ -34,7 +34,18 @@ int HARDWARE_TEST_MAIN(void){
  hp_apply(0,2);go_home();for(unsigned i=0;i<4;i++){ui_prefs2=(ui_prefs2&~0x50)|(i&1?0x10:0)|(i&2?0x40:0);int bpm=song.g[G_BPM];turn(EN_SELECT,1);CHECK(ui.home&&hp.track[0].active==1&&song.g[G_BPM]==bpm);
   /* Caravel Plus: first HOME tap opens MIXER; the next quick tap toggles
    * ACTION and returns HOME. Four saved SELECT preferences cannot hijack it. */
-  uint8_t prev_action=action_enabled;taps(B_HOME);page_is("MIXER");taps(B_HOME);CHECK(ui.home&&action_enabled!=prev_action);
+#if CARAVEL_ACTION_BANKS
+  uint8_t prev_action=action_enabled;
+  taps(B_HOME);page_is("MIXER");
+  taps(B_HOME);CHECK(ui.home&&action_enabled!=prev_action);
+#else
+  /* This HOME hardware harness normally builds without ACTION banks.
+   * In that configuration successive HOME taps cycle the mixer pages. */
+  taps(B_HOME);page_is("MIXER");
+  taps(B_HOME);page_is("LEVELS");
+  taps(B_HOME);page_is("CLOCK");
+  taps(B_HOME);CHECK(ui.home);
+#endif
   turn(EN_SELECT,-1);CHECK(hp.track[0].active==0);}
  taps(B_GLO);page_is("MIXER");turn(EN_SELECT,1);page_is("LEVELS");turn(EN_SELECT,1);page_is("CLOCK");turn(EN_SELECT,1);page_is("SONG");turn(EN_SELECT,8);page_is("SONG");turn(EN_SELECT,-8);page_is("MIXER");taps(B_HOME);CHECK(ui.home);
  int bpm=song.g[G_BPM];web_buttons(1u<<B_GLO);run_ms(80);turn(EN_SELECT,2);web_buttons(0);run_ms(180);CHECK(song.g[G_BPM]>bpm&&ui.home);
