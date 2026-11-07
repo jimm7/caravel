@@ -60,3 +60,17 @@ Explore generative sequencing and optional engines **only after** base stability
 - Keep upstream notices and licences; distribute corresponding sources with any binary.
 
 This file is a roadmap, **not** a claim that implementation or hardware testing is complete.
+
+## First implementation: discoverable existing mixer (2026-11-07)
+
+The v0.11.0 source already implements a MIXER page with K1 LEVEL, K2 PAN, K3 REV send and K4 MUTE for the track selected using ALGORITHM. The first firmware edit makes that **existing page** accessible without adding a second mixing subsystem:
+
+- From performance HOME, tap HOME to open MIXER.
+- From MIXER, tap HOME to show CLOCK.
+- From CLOCK (or any other non-MIXER page), tap HOME to return to performance HOME.
+- ALGORITHM changes selected track. The existing K1-K4 mixer functions are unchanged.
+- SAVE > PROJECT > A-D remains the intended way to persist the performance.
+
+**Testing status:** code review only. Host compilation, emulator checks, button-event regression tests, and hardware acceptance are not yet completed. Do not flash this development commit.
+
+**Follow-up:** inspect the double-tap interception in `ui_input.c` and how HOME track-navigation preferences interact with this behaviour; verify tap vs held-menu behaviour before release. Design a four-track simultaneous mixing view only after the navigation test is sound.
