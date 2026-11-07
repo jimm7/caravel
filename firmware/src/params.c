@@ -651,6 +651,11 @@ static const page_t PAGES[] = {
     FAM_TRK,
 #endif
     SC_TRK, GR_TRK, {0, 1, 2, 3}},
+#if FELUCCA_HOME_PERF
+    /* Caravel Plus: four levels under K1-K4; existing MIXER remains the
+     * selected track's LEVEL/PAN/REV/MUTE view. No saved page IDs changed. */
+    {"LEVELS", FAM_GLO, SC_TRK, GR_TRK, {0, 1, 2, 3}},
+#endif
     {"CLOCK",
 #if FELUCCA_HOME_PERF
     FAM_GLO,
