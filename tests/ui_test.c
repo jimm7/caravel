@@ -153,6 +153,9 @@ static struct { uint32_t stage; } felucca_dbg;
 #include "../firmware/src/ui_graph.c"
 #include "../firmware/src/ui_draw.c"
 #include "../firmware/src/ui_menu.c"
+#if CARAVEL_ACTION_BANKS
+#include "../experiments/action-banks/action_control.c"
+#endif
 #include "../firmware/src/ui_input.c"
 #include "../firmware/src/ui_layer.c"
 #include "../firmware/src/upreset.c"
@@ -10068,6 +10071,13 @@ static int test_caravel_plus_home(void)
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
+#if defined(CARAVEL_PLUS_FOCUSED)
+#if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
+    return test_caravel_plus_home() ? 1 : 0;
+#else
+#error "CARAVEL_PLUS_FOCUSED needs FELUCCA_HOME_PERF and CARAVEL_ACTION_BANKS"
+#endif
+#else
     int bad = 0;
 #if FELUCCA_HOME_PERF && CARAVEL_ACTION_BANKS
     bad += test_caravel_plus_home();
@@ -10166,6 +10176,7 @@ int main(void)
     if (getenv("UI_SCREEN_DIR")) chain_screens(getenv("UI_SCREEN_DIR"));
     printf(bad ? "ui: %d FAILED\n" : "ui: all passed\n", bad);
     return bad ? 1 : 0;
+#endif /* CARAVEL_PLUS_FOCUSED */
 }
 #endif
 
