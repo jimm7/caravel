@@ -96,6 +96,12 @@
 
 /* ------------------------------------------------- MIDI, sequencer --- */
 #include "usb.c"
+#ifndef CARAVEL_BLE_MIDI_BRIDGE
+#define CARAVEL_BLE_MIDI_BRIDGE 0
+#endif
+#if CARAVEL_BLE_MIDI_BRIDGE
+#include "ble_midi_bridge.c"    /* host-only seam; target builds are guarded */
+#endif
 #if FELUCCA_UART
 #include "midi_uart.c"
 #endif

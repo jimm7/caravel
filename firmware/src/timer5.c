@@ -33,6 +33,10 @@ void fm1_timer5_irq(void)
     if (sub % 5u == 2u)
         uart_midi_poll();                       /* 2 kHz, including during audio: <= 2 new wire bytes per poll */
 #endif
+#if CARAVEL_BLE_MIDI_BRIDGE
+    if (sub % 5u == 2u)
+        ble_bridge_timer5_poll();      /* TIMER5 is the sole midi_enqueue producer */
+#endif
     if (++sub == 10u)
         sub = 0;
     if (felucca_dbg.in_audio) {
