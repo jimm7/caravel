@@ -26,7 +26,7 @@
 #define BLE_RX_DRAIN 8u
 static uint32_t ble_rx_pkt[BLE_RX_Q];
 static volatile uint32_t ble_rx_write, ble_rx_read;
-static volatile uint8_t ble_rx_overrun;
+static volatile uint8_t ble_rx_overrun, ble_rx_link_lost;
 
 /* Input is a USB-MIDI-format 32-bit event packed by the future BLE stack. */
 static int ble_bridge_safe(uint32_t pkt)
@@ -49,7 +49,7 @@ static int ble_bridge_safe(uint32_t pkt)
 static int ble_bridge_radio_receive(uint32_t pkt)
 {
     uint32_t w;
-    if (!ble_bridge_safe(pkt))
+    if (ble_rx_link_lost || !ble_bridge_safe(pkt))
         return 0;                                /* drop SysEx/invalid safely */
     w = ble_rx_write;
     if (w - ble_rx_read >= BLE_RX_Q) {
@@ -63,13 +63,21 @@ static int ble_bridge_radio_receive(uint32_t pkt)
 }
 
 /* TIMER5 context: the only caller of midi_enqueue for this bridge. */
+/* The radio IRQ reports link loss without mutating Caravel's MIDI/synth state.
+ * TIMER5 requests the existing held-note recovery after dropping stale input. */
+static void ble_bridge_radio_link_lost(void)
+{
+    ble_rx_link_lost = 1u;
+    RING_PUBLISH();
+}
+
 static void ble_bridge_timer5_poll(void)
 {
     uint32_t n = 0;
-    if (ble_rx_overrun) {
+    if (ble_rx_overrun || ble_rx_link_lost) {
         /* A lost note-off means the synth MUST release held notes. */
         ble_rx_read = ble_rx_write;
-        ble_rx_overrun = 0;
+        ble_rx_overrun = ble_rx_link_lost = 0u;
         midi_in_overflow = 1u;
         return;
     }
@@ -89,5 +97,5 @@ static void ble_bridge_timer5_poll(void)
 static void ble_bridge_reset(void)
 {
     ble_rx_read = ble_rx_write = 0u;
-    ble_rx_overrun = 0u;
+    ble_rx_overrun = ble_rx_link_lost = 0u;
 }
