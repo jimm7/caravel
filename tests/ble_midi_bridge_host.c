@@ -61,6 +61,37 @@ int main(void)
     CHECK(!ble_bridge_radio_receive(packet(0xF0u, 1u, 2u)));
     CHECK(!ble_bridge_radio_receive(packet(0x90u, 60u, 200u)));
     CHECK(!midi_in_overflow);
-    puts("BLE-MIDI bridge host tests passed (without radio hardware)");
+    /* Radio link loss must not emit queued notes or mutate synth from radio IRQ. */
+    ble_bridge_reset();
+    count = 0u;
+    CHECK(ble_bridge_radio_receive(on));
+    ble_bridge_radio_link_lost();
+    CHECK(!midi_in_overflow);
+    CHECK(!ble_bridge_radio_receive(off));
+    ble_bridge_timer5_poll();
+    CHECK(midi_in_overflow && count == 0u);
+    CHECK(ble_rx_read == ble_rx_write);
+    midi_in_overflow = 0u;
+    CHECK(ble_bridge_radio_receive(on));
+    ble_bridge_timer5_poll();
+    CHECK(count == 1u && last_packet == on && last_source == 3u);
+    CHECK(!midi_in_overflow);
+
+    /* Bounded TIMER5 work and FIFO ordering after rollover. */
+    ble_bridge_reset();
+    count = 0u;
+    for (i = 0; i < BLE_RX_DRAIN + 1u; i++) CHECK(ble_bridge_radio_receive(on));
+    ble_bridge_timer5_poll();
+    CHECK(count == BLE_RX_DRAIN);
+    ble_bridge_timer5_poll();
+    CHECK(count == BLE_RX_DRAIN + 1u);
+    ble_bridge_reset();
+    count = 0u;
+    ble_rx_write = ble_rx_read = 0xFFFFFFFEu;
+    for (i = 0; i < 4u; i++) CHECK(ble_bridge_radio_receive(off));
+    ble_bridge_timer5_poll();
+    CHECK(count == 4u && last_source == 3u && last_packet == off);
+    CHECK(ble_rx_read == ble_rx_write);
+    puts("BLE-MIDI host tests passed: queue, overflow, disconnect, wraparound");
     return 0;
 }
