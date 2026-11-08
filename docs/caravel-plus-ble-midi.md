@@ -42,6 +42,12 @@ From the `fm1-base` README **on its small template**: own BLE stack adds about *
 
 `jimm7/FM1-Companion` provides a phone-side BLE scanner and diagnostic. v0.1.1 fixed Android BLE scanning on the Samsung S24 Ultra. Its earlier "connected" result with `BT-TH-161C5C58` is **not evidence** that Caravel advertised MIDI; that device advertised `FFD0`, not the standard BLE-MIDI service. The Android application now has a branch with explicit GATT service verification.
 
+## Stage 1: MIDI receive bridge prototype (source only)
+
+`firmware/src/ble_midi_bridge.c` is included only with `CARAVEL_BLE_MIDI_BRIDGE=1` (default is 0). It establishes the future BLE stack's receive-contract: one radio ISR producer submits **already decoded** 4-byte MIDI 1.0 events to its own bounded ring; TIMER5 drains the ring and is still the only producer of `midi_enqueue`. The events are tagged source **3** (USB=1, TRS=2) and existing `seq.c` will route note/CC messages. SysEx, vendor data and malformed status bytes are rejected; saturation requests the established note-release/panic recovery. BLE external clock selection, outbound MIDI and all RF functionality **remain absent**.
+
+The adapter is tested without the radio through `tests/ble_midi_bridge_host.c`, compiled in CI by the host C compiler. **Target** `tools/build.py` refuses an enabled bridge build because installing it without the hardware stack would falsely imply BLE works. A source file under `firmware/src/` is not evidence of a BLE-capable `.fwsc`.
+
 ## Release rule
 
 **Nothing in this stage enables Bluetooth or changes a synth firmware image.** Keep this PR in draft and never merge it as "BLE support" or issue `.fwsc`/flash instructions until compilation, resource checks, storage compatibility and on-device safety are demonstrated. A green *feasibility* CI is only evidence the calculations and documentation passed, not proof that a BLE firmware exists.

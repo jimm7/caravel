@@ -19,5 +19,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check budget model and linker constants
         run: python3 -m unittest discover -s tests -p 'test_ble_feasibility.py' -v
+      - name: Compile and run host-only BLE MIDI bridge tests
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror tests/ble_midi_bridge_host.c -o /tmp/ble-midi-bridge-test
+          /tmp/ble-midi-bridge-test
       - name: Show measured baseline and estimated Bluetooth cost
         run: python3 tools/ble_feasibility.py

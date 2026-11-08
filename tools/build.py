@@ -39,6 +39,11 @@ import fm1pkg_make  # noqa: E402
 import lz4blk  # noqa: E402
 import release_artifacts  # noqa: E402
 
+# Explicitly prevent accidentally packaging a MIDI bridge without a radio stack.
+# The bridge is host-testable, but Bluetooth RF itself is not ported yet.
+if os.environ.get("CARAVEL_BLE_MIDI_BRIDGE") == "1":
+    raise SystemExit("BLE-MIDI bridge is host-test only; no safe RF firmware build exists")
+
 APP_XIP = 0x02000120                # app.bin offset 0 in the XIP map; the SPL jumps here
 APP_SLOT = fm1pkg_make.APP_SLOT
 LOADER_LOAD = 0x01C0A800
